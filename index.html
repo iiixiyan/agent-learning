@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 全栈工程师转型之路 - Python 版</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.8;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px 8px 36px;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.9);
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e8e8e8;
+            overflow-y: auto;
+            padding: 16px 0;
+        }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .stage-group { margin-bottom: 8px; }
+        .stage-title {
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #667eea;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            user-select: none;
+        }
+        .stage-title:hover { background: #f0f2ff; }
+        .stage-title .arrow { transition: transform 0.2s; font-size: 12px; }
+        .stage-group.collapsed .arrow { transform: rotate(-90deg); }
+        .stage-group.collapsed .article-list { display: none; }
+        .article-list { list-style: none; }
+        .article-item {
+            padding: 8px 20px 8px 36px;
+            font-size: 13px;
+            color: #555;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+        .article-item:hover {
+            background: #f5f7fa;
+            color: #667eea;
+        }
+        .article-item.active {
+            background: #f0f2ff;
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 500;
+        }
+        .article-item .status {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 6px;
+        }
+        .status.done { background: #e8f5e9; color: #4caf50; }
+        .status.todo { background: #fff3e0; color: #ff9800; }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px;
+        }
+        .content::-webkit-scrollbar { width: 8px; }
+        .content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .article-content {
+            max-width: 860px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px 50px;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            min-height: 60vh;
+        }
+        .article-content h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #667eea;
+            color: #333;
+        }
+        .article-content h2 {
+            font-size: 22px;
+            margin: 30px 0 16px;
+            color: #444;
+            padding-left: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .article-content h3 {
+            font-size: 18px;
+            margin: 24px 0 12px;
+            color: #555;
+        }
+        .article-content p { margin: 12px 0; color: #444; }
+        .article-content ul, .article-content ol { margin: 12px 0; padding-left: 28px; }
+        .article-content li { margin: 6px 0; }
+        .article-content blockquote {
+            border-left: 4px solid #667eea;
+            background: #f8f9ff;
+            padding: 12px 20px;
+            margin: 16px 0;
+            border-radius: 0 4px 4px 0;
+            color: #555;
+        }
+        .article-content code {
+            background: #f0f2f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            color: #e83e8c;
+        }
+        .article-content pre {
+            background: #1e1e1e;
+            padding: 16px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        .article-content pre code {
+            background: none;
+            padding: 0;
+            color: #d4d4d4;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .article-content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .article-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .article-content th, .article-content td {
+            border: 1px solid #e8e8e8;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .article-content th { background: #f5f7fa; font-weight: 600; }
+        .article-content hr { border: none; border-top: 1px solid #e8e8e8; margin: 30px 0; }
+        .welcome {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .welcome h2 { font-size: 32px; color: #667eea; margin-bottom: 16px; }
+        .welcome p { color: #888; font-size: 16px; margin: 8px 0; }
+        .welcome .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .welcome .stat-item {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .welcome .stat-num { font-size: 36px; font-weight: 700; color: #667eea; }
+        .welcome .stat-label { font-size: 14px; color: #888; margin-top: 4px; }
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 14px; }
+            .search-box { display: none; }
+            .menu-toggle { display: block; }
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                top: 60px;
+                bottom: 0;
+                z-index: 99;
+                transition: left 0.3s;
+            }
+            .sidebar.open { left: 0; }
+            .content { padding: 16px; }
+            .article-content { padding: 24px 20px; }
+            .article-content h1 { font-size: 22px; }
+        }
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+        .loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e8e8e8;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>📚 Agent 全栈工程师转型之路</h1>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索文章..." oninput="searchArticles()">
+        </div>
+        <span class="badge">Python 版</span>
+    </div>
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <div id="articleTree"></div>
+        </div>
+        <div class="content" id="content">
+            <div class="welcome">
+                <h2>🚀 欢迎学习 Agent 开发</h2>
+                <p>从零基础到企业级项目实战，全面掌握 AI Agent 全栈开发技能</p>
+                <p>技术栈：Python + FastAPI + LangChain + LangGraph</p>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-num">56</div>
+                        <div class="stat-label">篇文章</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-num">5</div>
+                        <div class="stat-label">个阶段</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-num">435+</div>
+                        <div class="stat-label">张配图</div>
+                    </div>
+                </div>
+                <p style="margin-top:40px;color:#aaa;">← 点击左侧目录开始学习</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 文章数据
+        const articles = [
+            { stage: "第一阶段：Agent 基础入门", items: [
+                { num: 1, title: "学员真实转型 Agent 成功经验", path: "01-第一阶段-Agent基础入门/01_学员真实转型Agent成功经验.md", done: true },
+                { num: 2, title: "前言：Agent 课程脉络梳理", path: "01-第一阶段-Agent基础入门/02_前言-Agent课程脉络梳理.md", done: true },
+                { num: 3, title: "AI Agent 开发要学什么？", path: "01-第一阶段-Agent基础入门/03_AI-Agent开发要学什么.md", done: true },
+                { num: 4, title: "从 Tool 开始：让大模型自动调工具", path: "01-第一阶段-Agent基础入门/04_从Tool开始-让大模型自动调工具读文件.md", done: true },
+                { num: 5, title: "实现 mini cursor：自动调用 tool", path: "01-第一阶段-Agent基础入门/05_实现mini-cursor.md", done: true },
+                { num: 6, title: "MCP：可跨进程调用的 Tool", path: "01-第一阶段-Agent基础入门/06_MCP-可跨进程调用的Tool.md", done: true },
+                { num: 7, title: "高德 MCP + 浏览器 MCP", path: "01-第一阶段-Agent基础入门/07_高德MCP+浏览器MCP.md", done: true },
+                { num: 8, title: "RAG：文档向量化与语义搜索", path: "01-第一阶段-Agent基础入门/08_RAG-把文档向量化.md", done: true },
+                { num: 9, title: "知识库的 loader 和 splitter", path: "01-第一阶段-Agent基础入门/09_知识库的loader和splitter.md", done: true },
+                { num: 10, title: "LangChain 全部 Splitter 解析", path: "01-第一阶段-Agent基础入门/10_LangChain全部Splitter.md", done: true },
+                { num: 11, title: "向量数据库 Milvus", path: "01-第一阶段-Agent基础入门/11_向量数据库Milvus.md", done: true },
+                { num: 12, title: "Milvus + RAG 实战：电子书检索", path: "01-第一阶段-Agent基础入门/12_Milvus+RAG实战.md", done: true },
+                { num: 13, title: "Memory 管理的三大策略", path: "01-第一阶段-Agent基础入门/13_Memory管理的三大策略.md", done: true },
+                { num: 14, title: "结构化大模型输出：output parser", path: "01-第一阶段-Agent基础入门/14_结构化大模型输出.md", done: true },
+                { num: 15, title: "Output Parser 实战", path: "01-第一阶段-Agent基础入门/15_Output-Parser实战.md", done: true },
+                { num: 16, title: "Prompt Template：组件化管理", path: "01-第一阶段-Agent基础入门/16_Prompt-Template.md", done: true },
+                { num: 17, title: "Runnable：把写逻辑变成组装 chain", path: "01-第一阶段-Agent基础入门/17_Runnable-把写逻辑变成组装chain.md", done: true },
+                { num: 18, title: "实战练习 LCEL 组装 chain", path: "01-第一阶段-Agent基础入门/18_实战练习LCEL组装chain.md", done: true },
+                { num: 19, title: "LangChain 整体总结", path: "01-第一阶段-Agent基础入门/19_LangChain整体总结.md", done: true },
+            ]},
+            { stage: "第二阶段：企业级后端与进阶框架", items: [
+                { num: 20, title: "FastAPI + LangChain 实现 SSE 流式接口", path: "02-第二阶段-企业级后端与进阶框架/20_FastAPI+LangChain实现SSE流式接口.md", done: true },
+                { num: 21, title: "FastAPI + tool 实现定时任务（上）", path: "02-第二阶段-企业级后端与进阶框架/21_FastAPI+tool实现定时任务(上).md", done: true },
+                { num: 22, title: "FastAPI + tool 实现定时任务（下）", path: "02-第二阶段-企业级后端与进阶框架/22_FastAPI+tool实现定时任务(下).md", done: true },
+                { num: 23, title: "给 Agent 加上语音交互：ASR + TTS", path: "02-第二阶段-企业级后端与进阶框架/23_给Agent加上语音交互.md", done: true },
+                { num: 24, title: "AGUI 协议：流式组件渲染", path: "02-第二阶段-企业级后端与进阶框架/24_AGUI协议.md", done: true },
+                { num: 25, title: "图编排引擎：LangGraph 和多 Agent", path: "02-第二阶段-企业级后端与进阶框架/25_图编排引擎-LangGraph和多Agent架构.md", done: true },
+                { num: 26, title: "Agentic RAG：自主决策的 RAG 闭环", path: "02-第二阶段-企业级后端与进阶框架/26_Agentic-RAG.md", done: true },
+                { num: 27, title: "Docker Compose 本地开发与部署", path: "02-第二阶段-企业级后端与进阶框架/27_基于Docker-Compose的部署.md", done: true },
+                { num: 28, title: "ElasticSearch 全文检索", path: "02-第二阶段-企业级后端与进阶框架/28_ElasticSearch全文检索.md", done: true },
+            ]},
+            { stage: "第三阶段：检索增强与知识图谱", items: [
+                { num: 29, title: "混合检索 RAG：多路召回 + 重排", path: "03-第三阶段-检索增强与知识图谱/29_混合检索RAG.md", done: true },
+                { num: 30, title: "Neo4j 知识图谱和 Graph RAG", path: "03-第三阶段-检索增强与知识图谱/30_Neo4j知识图谱和Graph-RAG.md", done: true },
+                { num: 31, title: "LangSmith 全链路观测", path: "03-第三阶段-检索增强与知识图谱/31_LangSmith全链路观测.md", done: true },
+                { num: 32, title: "DeepAgents：skill 与上下文压缩", path: "03-第三阶段-检索增强与知识图谱/32_DeepAgents.md", done: true },
+                { num: 33, title: "DeepAgents 实战：深度调研助手", path: "03-第三阶段-检索增强与知识图谱/33_DeepAgents实战.md", done: true },
+                { num: 34, title: "PostgreSQL：AI 时代最适合的数据库", path: "03-第三阶段-检索增强与知识图谱/34_PostgreSQL.md", done: true },
+                { num: 35, title: "Redis：Agent 短期记忆存储", path: "03-第三阶段-检索增强与知识图谱/35_Redis-实现Agent短期记忆.md", done: true },
+                { num: 36, title: "Mem0：分层记忆 + 三路召回", path: "03-第三阶段-检索增强与知识图谱/36_Mem0-长期记忆方案.md", done: true },
+            ]},
+            { stage: "第四阶段：存储、消息与监控", items: [
+                { num: 37, title: "FastAPI 进阶：企业级后端框架", path: "04-第四阶段-存储消息与监控/37_FastAPI进阶.md", done: true },
+                { num: 38, title: "Agent 的对象存储方案", path: "04-第四阶段-存储消息与监控/38_Agent的对象存储方案.md", done: true },
+                { num: 39, title: "多模态与 OSS 前端直传实战", path: "04-第四阶段-存储消息与监控/39_多模态与OSS前端直传实战.md", done: true },
+                { num: 40, title: "RabbitMQ：异步处理标配方案", path: "04-第四阶段-存储消息与监控/40_RabbitMQ.md", done: true },
+                { num: 41, title: "LangFuse：开源全链路监测", path: "04-第四阶段-存储消息与监控/41_LangFuse.md", done: true },
+                { num: 42, title: "图解 Transformer 架构", path: "04-第四阶段-存储消息与监控/42_图解Transformer架构.md", done: true },
+                { num: 43, title: "大模型训练、推理全流程", path: "04-第四阶段-存储消息与监控/43_大模型训练推理全流程.md", done: true },
+            ]},
+            { stage: "第五阶段：简历、面试与实战", items: [
+                { num: 44, title: "真实 Agent 简历参考库", path: "05-第五阶段-简历面试与实战/44_真实Agent简历参考库.md", done: true },
+                { num: 45, title: "真实 Agent 简历参考库（二）", path: "05-第五阶段-简历面试与实战/45_真实Agent简历参考库(二).md", done: true },
+                { num: 46, title: "Agent 面试题押题精讲：RAG 篇", path: "05-第五阶段-简历面试与实战/46_Agent面试题押题精讲-RAG篇.md", done: true },
+                { num: 47, title: "真实 Agent 简历参考库（RAG专场）", path: "05-第五阶段-简历面试与实战/47_真实Agent简历参考库(知识库RAG专场).md", done: true },
+                { num: 48, title: "企业级知识库项目：项目介绍", path: "05-第五阶段-简历面试与实战/48_企业级知识库项目-项目介绍.md", done: true },
+                { num: 49, title: "企业级知识库项目：数据库设计", path: "05-第五阶段-简历面试与实战/49_企业级知识库项目-数据库设计.md", done: true },
+                { num: 50, title: "企业级知识库项目：文件解析为 md", path: "05-第五阶段-简历面试与实战/50_企业级知识库项目-文件解析为md.md", done: true },
+                { num: 51, title: "企业级知识库项目：异步 RAG 流水线", path: "05-第五阶段-简历面试与实战/51_企业级知识库项目-异步RAG流水线.md", done: true },
+                { num: 52, title: "企业级知识库项目：全文检索链路", path: "05-第五阶段-简历面试与实战/52_企业级知识库项目-全文检索链路.md", done: true },
+                { num: 53, title: "企业级知识库项目：抽取 Neo4j 实体", path: "05-第五阶段-简历面试与实战/53_企业级知识库项目-文档抽取Neo4j实体.md", done: true },
+                { num: 54, title: "企业级知识库项目：文档审核机制", path: "05-第五阶段-简历面试与实战/54_企业级知识库项目-文档审核机制.md", done: true },
+                { num: 55, title: "企业级知识库项目：用户鉴权流程", path: "05-第五阶段-简历面试与实战/55_企业级知识库项目-用户鉴权流程.md", done: true },
+                { num: 56, title: "企业级知识库项目：用户模块完善", path: "05-第五阶段-简历面试与实战/56_企业级知识库项目-用户模块功能完善.md", done: true },
+            ]},
+        ];
+
+        let currentArticle = null;
+        // 应用基础路径（解决无尾部斜杠时相对路径解析错误的问题）
+        const basePath = (function() {
+            const p = window.location.pathname;
+            return p.endsWith('/') ? p : p + '/';
+        })();
+
+        // 渲染目录树
+        function renderTree(filter = '') {
+            const tree = document.getElementById('articleTree');
+            let html = '';
+            articles.forEach((stage, sIdx) => {
+                const filteredItems = stage.items.filter(item => 
+                    item.title.toLowerCase().includes(filter.toLowerCase()) ||
+                    item.num.toString().includes(filter)
+                );
+                if (filter && filteredItems.length === 0) return;
+                html += `<div class="stage-group" data-stage="${sIdx}">`;
+                html += `<div class="stage-title" onclick="toggleStage(${sIdx})">`;
+                html += `<span>${stage.stage}</span><span class="arrow">▼</span></div>`;
+                html += `<ul class="article-list">`;
+                filteredItems.forEach(item => {
+                    const active = currentArticle && currentArticle.num === item.num ? 'active' : '';
+                    const status = item.done ? '<span class="status done">已完成</span>' : '<span class="status todo">待补充</span>';
+                    html += `<li class="article-item ${active}" onclick="loadArticle('${item.path}', ${item.num})">`;
+                    html += `${item.num}. ${item.title}${status}</li>`;
+                });
+                html += `</ul></div>`;
+            });
+            tree.innerHTML = html;
+        }
+
+        function toggleStage(idx) {
+            const group = document.querySelector(`.stage-group[data-stage="${idx}"]`);
+            group.classList.toggle('collapsed');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function searchArticles() {
+            const query = document.getElementById('searchInput').value;
+            renderTree(query);
+        }
+
+        // 加载文章
+        async function loadArticle(path, num) {
+            currentArticle = { num, path };
+            document.querySelectorAll('.article-item').forEach(el => el.classList.remove('active'));
+            event.target.closest('.article-item').classList.add('active');
+            
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:16px;">加载中...</p></div>';
+
+            try {
+                const resp = await fetch(basePath + path);
+                if (!resp.ok) throw new Error('文件不存在');
+                const md = await resp.text();
+                
+                // 修正图片路径（使用绝对路径，避免无尾部斜杠时解析错误）
+                let processedMd = md.replace(/\.\.\/IMG\//g, basePath + 'IMG/');
+                
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            return hljs.highlight(code, { language: lang }).value;
+                        }
+                        return hljs.highlightAuto(code).value;
+                    },
+                    breaks: true,
+                    gfm: true
+                });
+
+                const html = marked.parse(processedMd);
+                content.innerHTML = `<div class="article-content">${html}</div>`;
+                
+                // 代码高亮
+                content.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+                
+                // 滚动到顶部
+                content.scrollTop = 0;
+            } catch (err) {
+                content.innerHTML = `<div class="welcome"><h2>📝 文章待补充</h2><p>该文章内容正在编写中，敬请期待！</p><p style="color:#aaa;margin-top:20px;">错误: ${err.message}</p></div>`;
+            }
+        }
+
+        // 初始化
+        renderTree();
+    </script>
+</body>
+</html>
